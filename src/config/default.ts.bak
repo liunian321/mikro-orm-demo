@@ -1,0 +1,15 @@
+export const Config = {
+  graphql: {
+    debug: true,
+    playground: {
+      settings: {
+        'request.credentials': 'include',
+      },
+    },
+    autoSchemaFile: true,
+    autoTransformHttpErrors: true,
+    cors: true,
+    // sortSchema: true,
+    // installSubscriptionHandlers: true,
+  },
+};
