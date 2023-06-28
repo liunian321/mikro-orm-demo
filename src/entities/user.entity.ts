@@ -1,12 +1,12 @@
 import {
   Collection,
   Entity,
-  OneToMany,
+  ManyToMany,
   PrimaryKey,
   Property,
 } from '@mikro-orm/core';
 import { Field, ID, ObjectType } from '@nestjs/graphql';
-import { TransactionEntity } from './transaction.entity';
+import { PostEntity } from './post.entity';
 
 @ObjectType()
 @Entity({ tableName: 'user' })
@@ -26,20 +26,8 @@ export class User {
   @Property({ lazy: true })
   password!: string;
 
-  /**
-   * 账户余额
-   */
-  @Field({ defaultValue: 0, description: '账户余额', nullable: true })
-  @Property({ default: 0, onCreate: () => 0, check: 'balance >= 0' })
-  balance!: number;
-
-  @Field()
-  @Property({ version: true })
-  version!: number;
-
-  @Field(() => [TransactionEntity])
-  @OneToMany(() => TransactionEntity, (transaction) => transaction.fromUser)
-  transactions = new Collection<TransactionEntity>(this);
+  @ManyToMany(() => PostEntity)
+  posts = new Collection<PostEntity>(this);
 
   @Field()
   @Property({ defaultRaw: 'now()' })

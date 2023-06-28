@@ -2,25 +2,23 @@ import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule } from '@nestjs/graphql';
-import { UserResolver } from './resolvers/user.resolver';
-import { UserService } from './services/user.service';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { User } from './entities/user.entity';
-import { TransactionEntity } from './entities/transaction.entity';
-import { InterestRate } from './entities/interestRate.entity';
-import { MoneyResolver } from './resolvers/money.resolver';
-import { TransactionResolver } from './resolvers/transaction.resolver';
-import { MoneyService } from './services/money.service';
-import { TransactionService } from './services/transaction.service';
+import { PostEntity } from './entities/post.entity';
 import process from 'process';
 import * as dotenv from 'dotenv';
+import { CategoryEntity } from './entities/category.entity';
+import { UserModule } from './user/user.module';
+import { PostModule } from './post/post.module';
+import { CategoryModule } from './category/category.module';
 
 dotenv.config();
 @Module({
   imports: [
-    MikroOrmModule.forFeature([User, TransactionEntity, InterestRate]),
+    MikroOrmModule.forFeature([User, PostEntity, CategoryEntity]),
     MikroOrmModule.forRoot({
       autoLoadEntities: true,
+      debug: true,
       driver: PostgreSqlDriver,
       dbName:
         typeof process.env.DATABASE_NAME === 'undefined'
@@ -47,15 +45,12 @@ dotenv.config();
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
+      playground: true,
+      include: [UserModule, PostModule, CategoryModule],
     }),
-  ],
-  providers: [
-    UserResolver,
-    MoneyResolver,
-    TransactionResolver,
-    UserService,
-    MoneyService,
-    TransactionService,
+    UserModule,
+    PostModule,
+    CategoryModule,
   ],
 })
 export class AppModule {}
