@@ -1,0 +1,8 @@
+import { type Config } from './default';
+export const configuration = async (): Promise<typeof Config> => {
+  const { config } = <{ config: typeof Config }>(
+    await import(`${__dirname}/default`)
+  );
+
+  return config;
+};
