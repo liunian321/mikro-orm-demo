@@ -3,7 +3,8 @@ import { UserService } from '../services/user.service';
 import {
   BaseUserInput,
   UpdateUserInput,
-  UserInput,
+  CreateUserInput,
+  LoginUserInput,
 } from '../../dto/blog.input';
 import { User } from '../../entities/user.entity';
 
@@ -16,8 +17,8 @@ export class UserResolver {
    * @param input
    */
   @Query(() => [User], { description: '获取用户' })
-  async getUsers(@Args('input') input: BaseUserInput): Promise<User[]> {
-    return this.userService.getUsers(input);
+  async queryUsers(@Args('input') input: BaseUserInput): Promise<User[]> {
+    return this.userService.queryUsersByCondition(input);
   }
 
   /**
@@ -25,7 +26,7 @@ export class UserResolver {
    * @param input
    */
   @Mutation(() => User, { description: '创建用户' })
-  async createUser(@Args('input') input: UserInput): Promise<User> {
+  async createUser(@Args('input') input: CreateUserInput): Promise<User> {
     return this.userService.createUser(input);
   }
 
@@ -44,5 +45,13 @@ export class UserResolver {
   @Mutation(() => Boolean, { description: '修改资料' })
   async updateUser(@Args('input') input: UpdateUserInput): Promise<boolean> {
     return this.userService.updateUser(input);
+  }
+
+  /**
+   * 登录
+   */
+  @Query(() => User, { description: '登录' })
+  async login(@Args('input') input: LoginUserInput): Promise<User> {
+    return this.userService.login(input);
   }
 }

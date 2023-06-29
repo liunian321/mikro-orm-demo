@@ -3,11 +3,15 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { User } from '../../entities/user.entity';
 import {
   BaseUserInput,
+  CreateUserInput,
+  LoginUserInput,
   UpdateUserInput,
-  UserInput,
 } from '../../dto/blog.input';
 import { isEmpty } from 'lodash';
 import * as bcrypt from 'bcrypt';
+import { EntityData, FilterQuery } from '@mikro-orm/core/typings';
+import { ObjectUtil } from '../../common/util/object.util';
+import { BCRYPT_ROUND } from '../../common/constants/base.constant';
 
 @Injectable()
 export class UserService {
@@ -17,10 +21,22 @@ export class UserService {
    * 获取用户
    * @param input
    */
-  async getUsers(input: BaseUserInput): Promise<User[]> {
+  async queryUsersByCondition(input: BaseUserInput): Promise<User[]> {
+    const where: FilterQuery<User> = {
+      nickName: isEmpty(input.nickName)
+        ? undefined
+        : { $like: '%' + input.nickName + '%' },
+      email: input.email,
+    };
+    const filterUndefinedProperties =
+      ObjectUtil.filterUndefinedProperties(where);
+
+    return this.entityManager.find(User, filterUndefinedProperties);
+  }
+
+  async getUsersByIds(ids: string[]): Promise<User[]> {
     return this.entityManager.find(User, {
-      name: { $like: '%' + input.name + '%' },
-      ...(input.email ? { email: input.email } : {}),
+      id: { $in: ids },
     });
   }
 
@@ -28,8 +44,8 @@ export class UserService {
    * 创建用户
    * @param input
    */
-  async createUser(input: UserInput): Promise<User> {
-    input.password = await bcrypt.hash(input.password, 10);
+  async createUser(input: CreateUserInput): Promise<User> {
+    input.password = await bcrypt.hash(input.password, BCRYPT_ROUND);
     const user = this.entityManager.create(User, input);
     await this.entityManager.flush();
     return user;
@@ -41,7 +57,8 @@ export class UserService {
    */
   async deleteUser(id: string): Promise<boolean> {
     try {
-      await this.entityManager.removeAndFlush({ id });
+      await this.entityManager.nativeDelete(User, { id });
+      await this.entityManager.flush();
       return true;
     } catch (e) {
       return false;
@@ -53,14 +70,42 @@ export class UserService {
    * @param input
    */
   async updateUser(input: UpdateUserInput): Promise<boolean> {
+    const data: EntityData<User> = {
+      id: input.userId,
+      ...input,
+    };
+    const filterUndefinedProperties =
+      ObjectUtil.filterUndefinedProperties(data);
+
     try {
-      const user = await this.entityManager.upsert(User, {
-        id: input.userId,
-        ...input,
-      });
+      const user = await this.entityManager.upsert(
+        User,
+        filterUndefinedProperties,
+      );
+      await this.entityManager.flush();
       return !isEmpty(user);
     } catch (e) {
       return false;
     }
+  }
+
+  /**
+   * 登录
+   * @param input
+   */
+  async login(input: LoginUserInput) {
+    const user = await this.entityManager.findOne(User, {
+      nickName: input.nickName,
+    });
+    if (isEmpty(user)) {
+      throw new Error('用户不存在');
+    }
+
+    const password = await bcrypt.hash(input.password, BCRYPT_ROUND);
+    if (user.password !== password) {
+      throw new Error('密码错误');
+    }
+
+    return user;
   }
 }

@@ -10,7 +10,7 @@ import { User } from './user.entity';
 import { CategoryEntity } from './category.entity';
 
 @ObjectType()
-@Entity({ tableName: 'transaction' })
+@Entity({ tableName: 'post' })
 export class PostEntity {
   @Field(() => ID)
   @PrimaryKey()
@@ -25,10 +25,6 @@ export class PostEntity {
   content!: string;
 
   @Field()
-  @Property({ version: true })
-  version!: number;
-
-  @Field()
   @Property({ defaultRaw: 'now()', lazy: true })
   createdAt: Date = new Date();
 
@@ -36,9 +32,11 @@ export class PostEntity {
   @Property({ defaultRaw: 'now()', onUpdate: () => new Date(), lazy: true })
   updatedAt: Date = new Date();
 
+  @Field(() => [User])
   @ManyToMany(() => User)
   users = new Collection<User>(this);
 
+  @Field(() => [CategoryEntity])
   @ManyToMany(() => CategoryEntity)
   categories = new Collection<CategoryEntity>(this);
 }

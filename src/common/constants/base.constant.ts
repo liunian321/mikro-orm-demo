@@ -1,1 +1,1 @@
-export const bcryptRound = 10;
+export const BCRYPT_ROUND = 10;
