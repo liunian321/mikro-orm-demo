@@ -7,7 +7,7 @@ import {
   Unique,
 } from '@mikro-orm/core';
 import { Field, ID, ObjectType } from '@nestjs/graphql';
-import { PostEntity } from './post.entity';
+import { PostEntity } from '../post/post.entity';
 
 @ObjectType()
 @Entity({ tableName: 'category' })
@@ -25,13 +25,14 @@ export class CategoryEntity {
   name!: string;
 
   @Field()
-  @Property({ defaultRaw: 'now()', lazy: true })
+  @Property({ defaultRaw: 'now()' })
   createdAt: Date = new Date();
 
   @Field()
-  @Property({ defaultRaw: 'now()', onUpdate: () => new Date(), lazy: true })
+  @Property({ defaultRaw: 'now()', onUpdate: () => new Date() })
   updatedAt: Date = new Date();
 
+  @Field(() => [PostEntity], { nullable: true })
   @ManyToMany(() => PostEntity)
   posts = new Collection<PostEntity>(this);
 }

@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { User } from '../../entities/user.entity';
+import * as bcrypt from 'bcrypt';
+import { EntityData, FilterQuery } from '@mikro-orm/core/typings';
+import { isEmpty } from 'lodash';
+import { User } from './user.entity';
+import { ObjectUtil } from '../common/utils/object.util';
+import { BCRYPT_ROUND } from '../common/constants/base.constant';
 import {
   BaseUserInput,
   CreateUserInput,
   LoginUserInput,
   UpdateUserInput,
-} from '../../dto/blog.input';
-import { isEmpty } from 'lodash';
-import * as bcrypt from 'bcrypt';
-import { EntityData, FilterQuery } from '@mikro-orm/core/typings';
-import { ObjectUtil } from '../../common/util/object.util';
-import { BCRYPT_ROUND } from '../../common/constants/base.constant';
+} from './user.input';
 
 @Injectable()
 export class UserService {
@@ -23,21 +23,31 @@ export class UserService {
    */
   async queryUsersByCondition(input: BaseUserInput): Promise<User[]> {
     const where: FilterQuery<User> = {
-      nickName: isEmpty(input.nickName)
-        ? undefined
-        : { $like: '%' + input.nickName + '%' },
+      nickName:
+        typeof input.nickName === 'undefined'
+          ? undefined
+          : { $like: `%${input.nickName}%` },
       email: input.email,
     };
-    const filterUndefinedProperties =
-      ObjectUtil.filterUndefinedProperties(where);
+    const properties = ObjectUtil.filterUndefinedProperties(where);
 
-    return this.entityManager.find(User, filterUndefinedProperties);
+    const users = await this.entityManager.find(User, properties);
+
+    if (isEmpty(users)) {
+      throw new Error('用户不存在');
+    }
+    return users;
   }
 
   async getUsersByIds(ids: string[]): Promise<User[]> {
-    return this.entityManager.find(User, {
+    const users = await this.entityManager.find(User, {
       id: { $in: ids },
     });
+
+    if (isEmpty(users)) {
+      throw new Error('用户不存在');
+    }
+    return users;
   }
 
   /**
@@ -45,8 +55,16 @@ export class UserService {
    * @param input
    */
   async createUser(input: CreateUserInput): Promise<User> {
-    input.password = await bcrypt.hash(input.password, BCRYPT_ROUND);
-    const user = this.entityManager.create(User, input);
+    const data = {
+      name: input.name,
+      nickName: input.nickName,
+      password: await bcrypt.hash(input.password, BCRYPT_ROUND),
+      email: input.email,
+    };
+
+    const properties = ObjectUtil.filterUndefinedProperties(data);
+
+    const user = this.entityManager.create(User, properties);
     await this.entityManager.flush();
     return user;
   }
@@ -58,7 +76,6 @@ export class UserService {
   async deleteUser(id: string): Promise<boolean> {
     try {
       await this.entityManager.nativeDelete(User, { id });
-      await this.entityManager.flush();
       return true;
     } catch (e) {
       return false;
@@ -74,16 +91,13 @@ export class UserService {
       id: input.userId,
       ...input,
     };
-    const filterUndefinedProperties =
-      ObjectUtil.filterUndefinedProperties(data);
+
+    const properties = ObjectUtil.filterUndefinedProperties(data);
 
     try {
-      const user = await this.entityManager.upsert(
-        User,
-        filterUndefinedProperties,
-      );
+      await this.entityManager.upsert<User>(User, properties);
       await this.entityManager.flush();
-      return !isEmpty(user);
+      return true;
     } catch (e) {
       return false;
     }
@@ -93,11 +107,11 @@ export class UserService {
    * 登录
    * @param input
    */
-  async login(input: LoginUserInput) {
+  async login(input: LoginUserInput): Promise<User> {
     const user = await this.entityManager.findOne(User, {
-      nickName: input.nickName,
+      email: input.email,
     });
-    if (isEmpty(user)) {
+    if (user === null) {
       throw new Error('用户不存在');
     }
 

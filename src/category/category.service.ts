@@ -1,11 +1,8 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import {
-  ManyCategoryInput,
-  CategoryInput,
-  UpdateCategoryInput,
-} from '../../dto/blog.input';
-import { CategoryEntity } from '../../entities/category.entity';
+import { isEmpty } from 'lodash';
+import { CategoryEntity } from './category.entity';
+import { ManyCategoryInput, UpdateCategoryInput } from './category.input';
 
 @Injectable()
 export class CategoryService {
@@ -15,7 +12,7 @@ export class CategoryService {
    * 创建帖子类别
    * @param input
    */
-  async create(input: ManyCategoryInput) {
+  async create(input: ManyCategoryInput): Promise<boolean> {
     try {
       // TODO: 优化获取表名
       const query = `INSERT INTO category (name) VALUES ${input.name
@@ -33,18 +30,14 @@ export class CategoryService {
    * 查询帖子类别
    * @param input
    */
-  async queryOne(input: CategoryInput): Promise<CategoryEntity> {
-    return this.entityManager.findOne(CategoryEntity, input);
-  }
-
-  /**
-   * 查询帖子类别
-   * @param input
-   */
-  async queryMany(input: ManyCategoryInput) {
-    return this.entityManager.find(CategoryEntity, {
+  async queryMany(input: ManyCategoryInput): Promise<CategoryEntity[]> {
+    const categoryEntities = await this.entityManager.find(CategoryEntity, {
       name: { $in: input.name },
     });
+    if (isEmpty(categoryEntities)) {
+      throw new Error('分类不存在');
+    }
+    return categoryEntities;
   }
 
   /**
@@ -52,13 +45,17 @@ export class CategoryService {
    * @param id
    */
   async delete(id: number): Promise<boolean> {
-    try {
-      await this.entityManager.nativeDelete(CategoryEntity, { id: id });
-      await this.entityManager.flush();
-      return true;
-    } catch (e) {
-      return false;
+    const categoryEntity = await this.entityManager.findOne(CategoryEntity, {
+      id,
+    });
+    if (categoryEntity === null) {
+      throw new Error('分类不存在');
     }
+    if (!isEmpty(categoryEntity.posts)) {
+      throw new Error('分类下存在帖子，不能删除');
+    }
+    await this.entityManager.nativeDelete(CategoryEntity, { id });
+    return true;
   }
 
   /**
@@ -70,7 +67,6 @@ export class CategoryService {
       id: input.id,
       name: input.name,
     });
-    await this.entityManager.flush();
     return category;
   }
 }

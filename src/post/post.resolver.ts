@@ -1,11 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { PostEntity } from '../../entities/post.entity';
-import { PostService } from '../services/post.service';
-import {
-  CreatePostInput,
-  QueryPostInput,
-  UpdatePostInput,
-} from '../../dto/blog.input';
+import { PostEntity } from './post.entity';
+import { PostService } from './post.service';
+import { BasePostInput, CreatePostInput, UpdatePostInput } from './post.input';
 
 @Resolver(() => PostEntity)
 export class PostResolver {
@@ -16,15 +12,15 @@ export class PostResolver {
    * @param input
    */
   @Query(() => [PostEntity], { description: '查询帖子' })
-  async queryPost(@Args('input') input: QueryPostInput): Promise<PostEntity[]> {
-    return this.transactionService.queryPost(input);
+  async postsQuery(@Args('input') input: BasePostInput): Promise<PostEntity[]> {
+    return this.transactionService.queryPosts(input);
   }
 
   /**
    * 创建帖子
    */
   @Mutation(() => PostEntity, { description: '创建帖子' })
-  async createPost(@Args('input') input: CreatePostInput): Promise<PostEntity> {
+  async postCreate(@Args('input') input: CreatePostInput): Promise<PostEntity> {
     return this.transactionService.createPost(input);
   }
 
@@ -32,7 +28,7 @@ export class PostResolver {
    * 删除帖子
    */
   @Mutation(() => Boolean, { description: '删除帖子' })
-  async deletePost(@Args('id') id: number): Promise<boolean> {
+  async postDelete(@Args('id') id: number): Promise<boolean> {
     return this.transactionService.deletePost(id);
   }
 
@@ -40,7 +36,7 @@ export class PostResolver {
    * 更新帖子
    */
   @Mutation(() => PostEntity, { description: '更新帖子' })
-  async updatePost(@Args('input') input: UpdatePostInput): Promise<PostEntity> {
+  async postUpdate(@Args('input') input: UpdatePostInput): Promise<PostEntity> {
     return this.transactionService.updatePost(input);
   }
 }

@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/postgresql';
-import {
-  CreatePostInput,
-  QueryPostInput,
-  UpdatePostInput,
-} from '../../dto/blog.input';
 import { isEmpty } from 'lodash';
-import { PostEntity } from '../../entities/post.entity';
-import { FilterQuery, Loaded } from '@mikro-orm/core/typings';
-import { CategoryService } from '../../category/services/category.service';
-import { UserService } from '../../user/services/user.service';
-import { ObjectUtil } from '../../common/util/object.util';
+import { FilterQuery } from '@mikro-orm/core/typings';
+import { PostEntity } from './post.entity';
+import { CategoryService } from '../category/category.service';
+import { UserService } from '../user/user.service';
+import { ObjectUtil } from '../common/utils/object.util';
+import { BasePostInput, CreatePostInput, UpdatePostInput } from './post.input';
 
 @Injectable()
 export class PostService {
@@ -24,23 +20,24 @@ export class PostService {
    * 查询帖子
    * @param input
    */
-  async queryPost(input: QueryPostInput): Promise<Loaded<PostEntity>[]> {
+  async queryPosts(input: BasePostInput): Promise<PostEntity[]> {
     const where: FilterQuery<PostEntity> = {
-      users: isEmpty(input.userIds)
-        ? undefined
-        : await this.userService.getUsersByIds(input.userIds),
-      categories: isEmpty(input.category)
-        ? undefined
-        : await this.categoryService.queryMany({
-            name: input.category,
-          }),
+      users:
+        typeof input.userIds === 'undefined' || input.userIds.length === 0
+          ? undefined
+          : await this.userService.getUsersByIds(input.userIds),
+      categories:
+        typeof input.category === 'undefined'
+          ? undefined
+          : await this.categoryService.queryMany({
+              name: input.category,
+            }),
       title: input.title,
     };
     // 过滤掉undefined的属性
-    const filterUndefinedProperties =
-      ObjectUtil.filterUndefinedProperties(where);
+    const properties = ObjectUtil.filterUndefinedProperties(where);
 
-    return this.entityManager.find(PostEntity, filterUndefinedProperties);
+    return this.entityManager.find(PostEntity, properties);
   }
 
   /**
@@ -52,7 +49,7 @@ export class PostService {
       name: input.category,
     });
     if (isEmpty(categoryEntity)) {
-      throw new Error(`类别${input.category}不存在`);
+      throw new Error(`类别: ${input.category}不存在`);
     }
     const post = this.entityManager.create(PostEntity, {
       title: input.title,
@@ -70,7 +67,6 @@ export class PostService {
   async deletePost(id: number): Promise<boolean> {
     try {
       await this.entityManager.nativeDelete(PostEntity, { id });
-      await this.entityManager.flush();
       return true;
     } catch (e) {
       return false;

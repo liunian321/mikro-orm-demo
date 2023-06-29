@@ -1,12 +1,12 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UserService } from '../services/user.service';
+import { UserService } from './user.service';
+import { User } from './user.entity';
 import {
   BaseUserInput,
-  UpdateUserInput,
   CreateUserInput,
   LoginUserInput,
-} from '../../dto/blog.input';
-import { User } from '../../entities/user.entity';
+  UpdateUserInput,
+} from './user.input';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -17,7 +17,7 @@ export class UserResolver {
    * @param input
    */
   @Query(() => [User], { description: '获取用户' })
-  async queryUsers(@Args('input') input: BaseUserInput): Promise<User[]> {
+  async usersQuery(@Args('input') input: BaseUserInput): Promise<User[]> {
     return this.userService.queryUsersByCondition(input);
   }
 
@@ -26,7 +26,7 @@ export class UserResolver {
    * @param input
    */
   @Mutation(() => User, { description: '创建用户' })
-  async createUser(@Args('input') input: CreateUserInput): Promise<User> {
+  async userCreate(@Args('input') input: CreateUserInput): Promise<User> {
     return this.userService.createUser(input);
   }
 
@@ -35,7 +35,7 @@ export class UserResolver {
    * @param id
    */
   @Mutation(() => Boolean, { description: '删除用户' })
-  async deleteUser(@Args('id') id: string): Promise<boolean> {
+  async userDelete(@Args('id') id: string): Promise<boolean> {
     return this.userService.deleteUser(id);
   }
 
@@ -43,7 +43,7 @@ export class UserResolver {
    * 修改资料
    */
   @Mutation(() => Boolean, { description: '修改资料' })
-  async updateUser(@Args('input') input: UpdateUserInput): Promise<boolean> {
+  async userUpdate(@Args('input') input: UpdateUserInput): Promise<boolean> {
     return this.userService.updateUser(input);
   }
 

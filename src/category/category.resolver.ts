@@ -1,12 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { PostEntity } from '../../entities/post.entity';
-import { CategoryService } from '../services/category.service';
-import {
-  CategoryInput,
-  ManyCategoryInput,
-  UpdateCategoryInput,
-} from '../../dto/blog.input';
-import { CategoryEntity } from '../../entities/category.entity';
+import { CategoryService } from './category.service';
+import { CategoryEntity } from './category.entity';
+import { ManyCategoryInput, UpdateCategoryInput } from './category.input';
 
 @Resolver(() => CategoryEntity)
 export class CategoryResolver {
@@ -17,7 +12,7 @@ export class CategoryResolver {
    * @param input
    */
   @Mutation(() => Boolean, { description: '创建分类' })
-  async createCategory(@Args('input') input: ManyCategoryInput) {
+  async categoryCreate(@Args('input') input: ManyCategoryInput) {
     try {
       return this.categoryService.create(input);
     } catch (e) {
@@ -30,7 +25,7 @@ export class CategoryResolver {
    * @param input
    */
   @Query(() => CategoryEntity, { description: '查询分类' })
-  async queryCategory(@Args('input') input: ManyCategoryInput) {
+  async categoriesQuery(@Args('input') input: ManyCategoryInput) {
     return this.categoryService.queryMany(input);
   }
 
@@ -38,7 +33,7 @@ export class CategoryResolver {
    * 删除分类
    */
   @Mutation(() => CategoryEntity, { description: '删除分类' })
-  async deleteCategory(@Args('id') id: number) {
+  async categoryDelete(@Args('id') id: number) {
     return this.categoryService.delete(id);
   }
 
@@ -46,7 +41,7 @@ export class CategoryResolver {
    * 更新分类
    */
   @Mutation(() => CategoryEntity, { description: '更新分类' })
-  async updateCategory(@Args('input') input: UpdateCategoryInput) {
+  async categoryUpdate(@Args('input') input: UpdateCategoryInput) {
     return this.categoryService.update(input);
   }
 }

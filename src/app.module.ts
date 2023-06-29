@@ -3,11 +3,11 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule } from '@nestjs/graphql';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { User } from './entities/user.entity';
-import { PostEntity } from './entities/post.entity';
 import process from 'process';
 import * as dotenv from 'dotenv';
-import { CategoryEntity } from './entities/category.entity';
+import { User } from './user/user.entity';
+import { PostEntity } from './post/post.entity';
+import { CategoryEntity } from './category/category.entity';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { CategoryModule } from './category/category.module';
@@ -40,6 +40,7 @@ dotenv.config();
         typeof process.env.DATABASE_PORT === 'undefined'
           ? '5432'
           : process.env.DATABASE_PORT,
+        10,
       ),
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
