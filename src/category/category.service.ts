@@ -19,7 +19,6 @@ export class CategoryService {
         .map((entity) => `('${entity}')`)
         .join(',')}`;
       await this.entityManager.execute<CategoryEntity[]>(query);
-      await this.entityManager.flush();
       return true;
     } catch (e) {
       return false;

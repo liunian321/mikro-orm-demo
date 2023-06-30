@@ -82,7 +82,6 @@ export class PostService {
       id: input.postId,
       ...input,
     });
-    await this.entityManager.flush();
     return post;
   }
 }

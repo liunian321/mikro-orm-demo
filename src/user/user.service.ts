@@ -96,7 +96,6 @@ export class UserService {
 
     try {
       await this.entityManager.upsert<User>(User, properties);
-      await this.entityManager.flush();
       return true;
     } catch (e) {
       return false;
